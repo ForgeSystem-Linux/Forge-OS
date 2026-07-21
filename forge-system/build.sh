@@ -133,23 +133,8 @@ chmod +x "$BUILD_DIR/airootfs/usr/local/bin/"*
 cp "$FORGE_DIR/packaging/forge-logo.svg" "$BUILD_DIR/airootfs/usr/share/icons/hicolor/scalable/apps/" 2>/dev/null || true
 
 # Systemd services
-cat > "$BUILD_DIR/airootfs/etc/systemd/system/forge-greeter.service" << 'EOF'
-[Unit]
-Description=Forge Display Manager
-After=systemd-user-sessions.service
-Conflicts=getty@tty1.service
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/forge-greeter
-Restart=always
-Environment=WAYLAND_DISPLAY=wayland-0
-Environment=XDG_SESSION_TYPE=wayland
-Environment=XDG_CURRENT_DESKTOP=Forge
-
-[Install]
-WantedBy=graphical.target
-EOF
+# SDDM is the default display manager (forge-greeter is optional/experimental)
+# forge-greeter.service is NOT auto-enabled to avoid conflicts
 
 cat > "$BUILD_DIR/airootfs/etc/systemd/system/forge-notifications.service" << 'EOF'
 [Unit]

@@ -27,8 +27,12 @@ mkdir -p "$WORK_DIR" "$ROOTFS_DIR"
 echo "[1/8] Bootstrap Arch Linux base..."
 echo ""
 
+# Use disk-backed cache instead of tmpfs
+export TMPDIR="$BUILD_DIR/tmp"
+mkdir -p "$TMPDIR"
+
 # Bootstrap base system
-pacstrap -K "$ROOTFS_DIR" base linux linux-firmware \
+pacstrap -K -C /dev/null "$ROOTFS_DIR" base linux linux-firmware \
     nano vim networkmanager network-manager-applet \
     bluez bluez-utils pipewire pipewire-pulse wireplumber \
     xdg-utils xdg-desktop-portal polkit dbus flatpak \

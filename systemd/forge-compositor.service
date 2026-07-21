@@ -1,0 +1,23 @@
+[Unit]
+Description=Forge Desktop Environment
+Documentation=https://github.com/forge-desktop
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/forge-compositor --backend winit --terminal weston-terminal
+Restart=on-failure
+RestartSec=5
+Environment=WAYLAND_DISPLAY=wayland-5
+Environment=XDG_CURRENT_DESKTOP=Forge
+Environment=XDG_SESSION_TYPE=wayland
+
+# Security hardening
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=graphical-session.target

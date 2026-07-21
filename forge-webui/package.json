@@ -1,0 +1,16 @@
+{
+  "name": "forge-webui",
+  "version": "0.1.0",
+  "description": "Forge DE TypeScript web UI components",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc && vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vite": "^5.4.0"
+  }
+}

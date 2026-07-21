@@ -1,0 +1,46 @@
+[package]
+name = "forge-compositor"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Forge Wayland compositor"
+
+[[bin]]
+name = "forge-compositor"
+path = "src/main.rs"
+
+[dependencies]
+smithay = { workspace = true, default-features = false, features = [
+    "backend_winit",
+    "backend_drm",
+    "backend_egl",
+    "backend_gbm",
+    "backend_libinput",
+    "backend_session_libseat",
+    "backend_udev",
+    "wayland_frontend",
+    "desktop",
+    "renderer_gl",
+    "renderer_pixman",
+    "use_system_lib",
+    "xwayland",
+]}
+forge-drm-sys = { path = "../forge-drm-sys" }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+wayland-protocols = "0.32"
+winit = "0.30"
+clap = { version = "4", features = ["derive"] }
+input = "0.10"
+libseat = "0.2"
+libloading = "0.8"
+udev = "0.9"
+libc = "0.2"
+
+[features]
+default = ["dev"]
+dev = ["smithay/backend_winit"]
+drm = ["smithay/backend_drm", "smithay/backend_udev", "smithay/backend_libinput", "smithay/backend_session_libseat"]
+xwayland = ["smithay/xwayland"]

@@ -1,0 +1,14 @@
+[Unit]
+Description=Forge Privilege Escalation Service
+Documentation=https://github.com/forge-desktop
+After=dbus.service
+
+[Service]
+Type=dbus
+BusName=org.forge.Privilege
+ExecStart=/usr/bin/forge-privilege
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=dbus.service

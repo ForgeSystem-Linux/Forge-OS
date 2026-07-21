@@ -1,0 +1,15 @@
+[Unit]
+Description=Forge Session Manager
+Documentation=https://github.com/forge-desktop
+After=forge-compositor.service
+Requires=forge-compositor.service
+
+[Service]
+Type=dbus
+BusName=org.forge.Session
+ExecStart=/usr/bin/forge-session
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=forge-compositor.service

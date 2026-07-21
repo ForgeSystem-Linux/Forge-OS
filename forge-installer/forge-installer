@@ -1,0 +1,35 @@
+#!/bin/bash
+# Forge System Installer
+# Usage: forge-installer [--test]
+
+TEST_MODE=false
+[ "$1" = "--test" ] && TEST_MODE=true
+
+QML_FILE=""
+for dir in "$HOME/.local/share/forge" "/usr/share/forge"; do
+    [ -f "$dir/forge-installer.qml" ] && QML_FILE="$dir/forge-installer.qml" && break
+done
+
+if [ -z "$QML_FILE" ]; then
+    echo "Error: forge-installer.qml not found"
+    exit 1
+fi
+
+if ! command -v qmlscene &> /dev/null; then
+    echo "Error: qmlscene not found. Install: sudo pacman -S qt6-declarative"
+    exit 1
+fi
+
+export QT_QUICK_BACKEND=software
+export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+export QML_XHR_ALLOW_FILE_READ=1
+
+if [ "$TEST_MODE" = true ]; then
+    echo "Starting Forge Installer (Test Mode)"
+    TMP_QML=$(mktemp /tmp/forge-installer-XXXXXX.qml)
+    sed 's/property bool testMode: false/property bool testMode: true/' "$QML_FILE" > "$TMP_QML"
+    exec qmlscene "$TMP_QML"
+else
+    echo "Starting Forge System Installer"
+    exec qmlscene "$QML_FILE"
+fi

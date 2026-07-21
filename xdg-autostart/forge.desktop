@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Forge Desktop
+Comment=Forge Desktop Environment Session
+Exec=forge-compositor
+Type=Application
+DesktopNames=Forge

@@ -1,0 +1,23 @@
+[package]
+name = "forge-privilege"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Forge DE privilege escalation helper"
+
+[[bin]]
+name = "forge-privilege"
+path = "src/main.rs"
+
+[lib]
+name = "forge_privilege"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+zbus = { workspace = true }
+serde = { workspace = true }
+tokio = { workspace = true }
+libc = "0.2"

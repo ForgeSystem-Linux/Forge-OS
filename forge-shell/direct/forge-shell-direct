@@ -1,0 +1,36 @@
+#!/bin/bash
+# Forge Shell - Direct Run Mode
+
+QML_FILE="$HOME/.local/share/forge/forge-shell-direct.qml"
+
+for dir in "$HOME/.local/share/forge" "/usr/share/forge"; do
+    [ -f "$dir/forge-shell-direct.qml" ] && QML_FILE="$dir/forge-shell-direct.qml" && break
+done
+
+if [ ! -f "$QML_FILE" ]; then
+    echo "Error: QML not found"
+    exit 1
+fi
+
+if [ -z "$WAYLAND_DISPLAY" ] && [ -z "$DISPLAY" ]; then
+    echo "Error: No display server"
+    exit 1
+fi
+
+if ! command -v qmlscene &> /dev/null; then
+    echo "Error: qmlscene not found. sudo pacman -S qt6-declarative"
+    exit 1
+fi
+
+for d in "$HOME/.local/share/forge" "/home/admin/forge/forge-shell/direct"; do
+    [ -f "$d/generate-data.sh" ] && bash "$d/generate-data.sh" 2>/dev/null && break
+done
+
+export QT_QUICK_BACKEND=software
+export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+export QML_XHR_ALLOW_FILE_READ=1
+
+echo "Starting Forge Shell (Direct Mode)"
+echo "Press Super to toggle start menu"
+
+exec qmlscene "$QML_FILE"

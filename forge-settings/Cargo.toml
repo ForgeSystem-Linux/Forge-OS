@@ -1,0 +1,16 @@
+[package]
+name = "forge-settings"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Forge DE settings application"
+
+[[bin]]
+name = "forge-settings"
+path = "src/main.rs"
+
+[dependencies]
+forge-config = { path = "../forge-config" }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }

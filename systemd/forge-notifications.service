@@ -1,0 +1,14 @@
+[Unit]
+Description=Forge Notification Daemon
+Documentation=https://github.com/forge-desktop
+After=forge-compositor.service
+Requires=forge-compositor.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/forge-notifications
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=forge-compositor.service

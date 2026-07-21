@@ -1,0 +1,33 @@
+[workspace]
+resolver = "2"
+members = [
+    "forge-compositor",
+    "forge-config",
+    "forge-shell",
+    "forge-settings",
+    "forge-notifications",
+    "forge-privilege",
+    "forge-session",
+    "forge-greeter",
+    "forge-clip",
+    "forge-screenshot",
+    "forge-drm-sys",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Forge DE Contributors"]
+description = "Forge Desktop Environment"
+
+[workspace.dependencies]
+smithay = { version = "0.7.0", default-features = false }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+anyhow = "1"
+thiserror = "2"
+zbus = "5"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "process", "sync"] }

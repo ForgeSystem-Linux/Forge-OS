@@ -1,0 +1,7 @@
+[Daemon]
+Theme=forge
+
+[boot]
+background=background.png
+background_mode=fit
+message=Booting Forge...

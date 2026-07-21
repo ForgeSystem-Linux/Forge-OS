@@ -1,0 +1,25 @@
+[Unit]
+Description=Forge Display Manager
+Documentation=https://github.com/forge-desktop
+After=systemd-user-sessions.service
+After=plymouth-quit-wait.service
+After=getty@tty7.service
+Conflicts=getty@tty7.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/forge-greeter
+Restart=always
+RestartSec=3
+
+# Environment
+Environment=DISPLAY=:0
+Environment=XDG_VTNR=7
+
+# Security
+User=root
+Group=root
+WorkingDirectory=/root
+
+[Install]
+WantedBy=multi-user.target

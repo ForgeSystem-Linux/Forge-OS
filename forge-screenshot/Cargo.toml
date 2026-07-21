@@ -1,0 +1,18 @@
+[package]
+name = "forge-screenshot"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Forge DE screenshot tool"
+
+[[bin]]
+name = "forge-screenshot"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+clap = { version = "4", features = ["derive"] }
+chrono = "0.4"
+dirs = "6"

@@ -1,0 +1,108 @@
+# Maintainer: Forge DE Contributors
+pkgname=forge-de-git
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Forge Desktop Environment - A modern Wayland compositor with display manager"
+arch=('x86_64')
+url="https://github.com/forge-desktop"
+license=('MIT')
+depends=(
+    'wayland'
+    'libinput'
+    'libseat'
+    'libgbm'
+    'mesa'
+    'xkbcommon'
+    'libxkbcommon'
+    'qt6-base'
+    'qt6-declarative'
+    'qt6-wayland'
+    'polkit'
+    'pam'
+    'systemd'
+    'xdg-utils'
+)
+makedepends=(
+    'cargo'
+    'cmake'
+)
+optdepends=(
+    'grim: Screenshot tool'
+    'slurp: Region selection for screenshots'
+    'wl-clipboard: Clipboard support'
+    'noto-fonts: Default fonts'
+)
+provides=('forge-de')
+conflicts=('forge-de')
+
+# For local builds, use this source:
+source=("$pkgname::git+file://$PWD/..")
+# For remote builds, uncomment this:
+# source=("$pkgname::git+https://github.com/forge-desktop/forge.git")
+sha256sums=('SKIP')
+
+prepare() {
+    cd "$pkgname"
+    # Use system cargo config if available
+    export RUSTUP_TOOLCHAIN=stable
+}
+
+build() {
+    cd "$pkgname"
+    cargo build --release --locked
+}
+
+package() {
+    cd "$pkgname"
+
+    # Install binaries
+    install -Dm755 target/release/forge-compositor "$pkgdir/usr/bin/forge-compositor"
+    install -Dm755 target/release/forge-shell "$pkgdir/usr/bin/forge-shell"
+    install -Dm755 target/release/forge-settings "$pkgdir/usr/bin/forge-settings"
+    install -Dm755 target/release/forge-notifications "$pkgdir/usr/bin/forge-notifications"
+    install -Dm755 target/release/forge-privilege "$pkgdir/usr/bin/forge-privilege"
+    install -Dm755 target/release/forge-session "$pkgdir/usr/bin/forge-session"
+    install -Dm755 target/release/forge-greeter "$pkgdir/usr/bin/forge-greeter"
+    install -Dm755 target/release/forge-clip "$pkgdir/usr/bin/forge-clip"
+    install -Dm755 target/release/forge-screenshot "$pkgdir/usr/bin/forge-screenshot"
+
+    # Install direct run script
+    install -Dm755 forge-shell/direct/forge-shell-direct "$pkgdir/usr/bin/forge-shell-direct"
+    install -Dm644 forge-shell/direct/forge-shell-direct.qml "$pkgdir/usr/share/forge/forge-shell-direct.qml"
+
+    # Install systemd services
+    install -Dm644 systemd/forge-compositor.service "$pkgdir/etc/systemd/system/forge-compositor.service"
+    install -Dm644 systemd/forge-notifications.service "$pkgdir/etc/systemd/system/forge-notifications.service"
+    install -Dm644 systemd/forge-privilege.service "$pkgdir/etc/systemd/system/forge-privilege.service"
+    install -Dm644 systemd/forge-session.service "$pkgdir/etc/systemd/system/forge-session.service"
+    install -Dm644 systemd/forge-greeter.service "$pkgdir/etc/systemd/system/forge-greeter.service"
+
+    # Install PAM configuration
+    install -Dm644 pam/forge-greeter "$pkgdir/etc/pam.d/forge-greeter"
+    install -Dm644 pam/forge-session "$pkgdir/etc/pam.d/forge-session"
+
+    # Install D-Bus configuration
+    install -Dm644 forge-privilege/org.forge.Privilege.conf "$pkgdir/etc/dbus-1/system.d/org.forge.Privilege.conf"
+
+    # Install PolicyKit policy
+    install -Dm644 forge-privilege/org.forge.Privilege.policy "$pkgdir/usr/share/polkit-1/actions/org.forge.Privilege.policy"
+
+    # Install XDG session
+    install -Dm644 xdg-autostart/forge.desktop "$pkgdir/usr/share/wayland-sessions/forge.desktop"
+
+    # Install QML files
+    install -Dm644 forge-shell/qml/*.qml "$pkgdir/usr/share/forge/qml/"
+
+    # Install icon
+    install -Dm644 packaging/forge-logo.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/forge-logo.svg"
+
+    echo ""
+    echo "Forge DE installed!"
+    echo ""
+    echo "Quick start (from Hyprland):"
+    echo "  forge-shell-direct        # Run shell as a window"
+    echo ""
+    echo "Full desktop:"
+    echo "  forge-compositor          # Run compositor"
+    echo ""
+}

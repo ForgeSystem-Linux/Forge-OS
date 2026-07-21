@@ -206,6 +206,7 @@ ExecStart=-/sbin/agetty --autologin root -o '-p -f \\u' --noclear %I $TERM
 EOF
 
 # Root shell profile
+mkdir -p "$BUILD_DIR/airootfs/root"
 cat > "$BUILD_DIR/airootfs/root/.bash_profile" << 'EOF'
 if [ -z "$WAYLAND_DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
     exec startx /usr/bin/forge-compositor --backend winit
@@ -213,6 +214,7 @@ fi
 EOF
 
 # Limine bootloader config
+mkdir -p "$BUILD_DIR/airootfs/boot"
 cat > "$BUILD_DIR/airootfs/boot/limine.conf" << 'EOF'
 TIMEOUT=0
 
@@ -231,8 +233,8 @@ echo ""
 # Copy the profile
 cp -r /usr/share/archiso/configs/releng/* "$BUILD_DIR/" 2>/dev/null || true
 
-# Override packages
-cp "$BUILD_DIR/packages.x86_64" "$BUILD_DIR/packages.x86_64"
+# Packages are already in BUILD_DIR from earlier
+echo "Using custom packages list"
 
 # Build ISO
 echo "Building ISO..."

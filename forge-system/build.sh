@@ -32,7 +32,7 @@ pacstrap -K "$ROOTFS_DIR" base linux linux-firmware \
     nano vim networkmanager network-manager-applet \
     bluez bluez-utils pipewire pipewire-pulse wireplumber \
     xdg-utils xdg-desktop-portal polkit dbus flatpak \
-    input libseat mesa xorg-xwayland xkbcommon \
+    seatd libinput libxkbcommon mesa xorg-xwayland \
     qt6-base qt6-declarative qt6-wayland \
     alacritty git base-devel cmake
 

@@ -4,7 +4,7 @@
 
 set -e
 
-BUILD_DIR="/tmp/forge-build"
+BUILD_DIR="$HOME/forge-build"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FORGE_DIR="$(dirname "$SCRIPT_DIR")"
 ISO_NAME="forge-$(date +%Y%m%d)-x86_64.iso"
@@ -64,6 +64,8 @@ libseat
 libgbm
 mesa
 xorg-xwayland
+sddm
+sddm-kcm
 
 # Boot
 limine
@@ -163,9 +165,9 @@ Restart=always
 WantedBy=graphical.target
 EOF
 
-# Enable services
-mkdir -p "$BUILD_DIR/airootfs/etc/systemd/system/graphical.target.wants"
-ln -sf /etc/systemd/system/forge-greeter.service "$BUILD_DIR/airootfs/etc/systemd/system/graphical.target.wants/"
+# Enable SDDM as default display manager
+mkdir -p "$BUILD_DIR/airootfs/etc/systemd/system/display-manager.target.wants"
+ln -sf /usr/lib/systemd/system/sddm.service "$BUILD_DIR/airootfs/etc/systemd/system/display-manager.target.wants/sddm.service" 2>/dev/null || true
 
 # Desktop session
 cat > "$BUILD_DIR/airootfs/usr/share/wayland-sessions/forge.desktop" << 'EOF'

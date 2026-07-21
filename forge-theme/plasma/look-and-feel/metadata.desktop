@@ -1,0 +1,12 @@
+[Desktop Entry]
+Comment=Forge Desktop Environment
+Name=Forge
+X-KDE-PluginInfo-Author=Forge Team
+X-KDE-PluginInfo-Category= Plasma Look And Feel
+X-KDE-PluginInfo-Depends=plasma-desktop,plasma-workspace
+X-KDE-PluginInfo-EnabledByDefault=true
+X-KDE-PluginInfo-Name=Forge
+X-KDE-PluginInfo-Version=0.1.0
+X-KDE-PluginInfo-Website=https://github.com/ForgeSystem-Linux/Forge-OS
+X-Plasma-API-Migrate-Version=6
+X-Plasma-MainScript=contents/layouts/defaults

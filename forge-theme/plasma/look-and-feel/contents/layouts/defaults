@@ -1,0 +1,20 @@
+[mappings]
+# Launch applications
+Meta+E=org.kde.dolphin.desktop
+Meta+T=org.kde.konsole.desktop
+Meta+L=lockscreen
+
+# Window management
+Meta+Up=maximize
+Meta+Down=minimize
+Meta+Left=quicktile-left
+Meta+Right=quicktile-right
+
+# System
+Alt+F4=closewindow
+Alt+Tab=switchwindows
+Alt+Shift+Tab=reverse-switchwindows
+
+# Desktop
+Meta+D=show-desktop
+Meta+Tab=overview

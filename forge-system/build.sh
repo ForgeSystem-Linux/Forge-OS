@@ -184,6 +184,32 @@ fi
 OOBESCRIPT
 chmod +x "$BUILD_DIR/airootfs/usr/share/forge/forge-oobe.sh"
 
+# Fix all permissions
+echo "Setting permissions..."
+chmod 755 "$BUILD_DIR/airootfs/usr/local/bin/"* 2>/dev/null || true
+chmod 755 "$BUILD_DIR/airootfs/usr/local/bin/forge-power" 2>/dev/null || true
+chmod 755 "$BUILD_DIR/airootfs/usr/local/bin/forge-apply" 2>/dev/null || true
+chmod 755 "$BUILD_DIR/airootfs/usr/local/bin/forge-install-helper" 2>/dev/null || true
+chmod 755 "$BUILD_DIR/airootfs/usr/local/bin/forge-gen-data" 2>/dev/null || true
+chmod 755 "$BUILD_DIR/airootfs/usr/local/bin/forge-dm" 2>/dev/null || true
+chmod 755 "$BUILD_DIR/airootfs/usr/local/bin/forge-setup" 2>/dev/null || true
+chmod 755 "$BUILD_DIR/airootfs/usr/local/bin/forge-installer" 2>/dev/null || true
+chmod 755 "$BUILD_DIR/airootfs/usr/share/forge/forge-oobe.sh" 2>/dev/null || true
+
+# Ensure SDDM is properly configured
+mkdir -p "$BUILD_DIR/airootfs/etc/sddm.conf.d"
+cat > "$BUILD_DIR/airootfs/etc/sddm.conf.d/forge.conf" << 'EOF'
+[Autologin]
+# Enable auto-login for live ISO (remove for production)
+
+[Theme]
+Current=breeze
+
+[General]
+HaltCommand=/usr/bin/systemctl poweroff
+RebootCommand=/usr/bin/systemctl reboot
+EOF
+
 # Auto-login on tty1 for live ISO
 mkdir -p "$BUILD_DIR/airootfs/etc/systemd/system/getty@tty1.service.d"
 cat > "$BUILD_DIR/airootfs/etc/systemd/system/getty@tty1.service.d/autologin.conf" << 'EOF'

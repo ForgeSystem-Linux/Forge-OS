@@ -31,3 +31,4 @@ forge-shell/direct/desktop.json
 
 # Local config
 .config/
+*.iso

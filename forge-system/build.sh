@@ -92,6 +92,7 @@ WantedBy=graphical.target
 EOF
 
 # Enable greeter
+mkdir -p "$BUILD_DIR/airootfs/etc/systemd/system/graphical.target.wants"
 ln -sf /etc/systemd/system/forge-greeter.service "$BUILD_DIR/airootfs/etc/systemd/system/graphical.target.wants/"
 
 # Create user script

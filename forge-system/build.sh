@@ -42,11 +42,10 @@ echo ""
 
 arch-chroot "$ROOTFS_DIR" /bin/bash << 'CHROOT'
 pacman -S --noconfirm --needed \
-    plasma-desktop plasma-workspace plasma-panel \
-    plasma-nm plasma-pa plasma-systemmonitor \
+    plasma-desktop plasma-workspace \
     systemsettings dolphin konsole kate ark gwenview \
     okular spectacle filelight kcalc \
-    sddm sddm-kcm kde-config-sddm
+    sddm sddm-kcm
 CHROOT
 
 echo ""

@@ -30,9 +30,27 @@ echo ""
 # Use disk-backed cache instead of tmpfs
 export TMPDIR="$BUILD_DIR/tmp"
 mkdir -p "$TMPDIR"
+mkdir -p "$BUILD_DIR/pkg-cache"
+
+# Create custom pacman.conf for chroot
+cat > "$BUILD_DIR/pacman.conf" << 'EOF'
+[options]
+RootDir = $BUILD_DIR/work/rootfs
+CacheDir = $BUILD_DIR/pkg-cache/
+GPGDir = $BUILD_DIR/work/rootfs/etc/pacman.d/gnupg
+HookDir = $BUILD_DIR/work/rootfs/etc/pacman.d/hooks/
+Architecture = auto
+SigLevel = Optional TrustAll
+
+[core]
+Server = https://archlinux.org/repos/$repo/os/$arch
+
+[extra]
+Server = https://archlinux.org/repos/$repo/os/$arch
+EOF
 
 # Bootstrap base system
-pacstrap -K -C /dev/null "$ROOTFS_DIR" base linux linux-firmware \
+pacstrap -K -C "$BUILD_DIR/pacman.conf" "$ROOTFS_DIR" base linux linux-firmware \
     nano vim networkmanager network-manager-applet \
     bluez bluez-utils pipewire pipewire-pulse wireplumber \
     xdg-utils xdg-desktop-portal polkit dbus flatpak \

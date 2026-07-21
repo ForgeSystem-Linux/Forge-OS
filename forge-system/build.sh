@@ -1,6 +1,6 @@
 #!/bin/bash
-# Forge System ISO Builder (Plasma-based)
-# Builds an Arch Linux ISO with KDE Plasma + Forge theme
+# Forge System ISO Builder (Custom - No mkarchiso)
+# Builds a minimal Arch Linux ISO with KDE Plasma + Forge
 
 set -e
 
@@ -8,9 +8,11 @@ BUILD_DIR="$HOME/forge-build"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FORGE_DIR="$(dirname "$SCRIPT_DIR")"
 ISO_NAME="forge-$(date +%Y%m%d)-x86_64.iso"
+WORK_DIR="$BUILD_DIR/work"
+ROOTFS_DIR="$WORK_DIR/rootfs"
 
-echo "Forge System Builder (Plasma Edition)"
-echo "======================================"
+echo "Forge System Builder (Custom)"
+echo "=============================="
 echo ""
 
 if [ "$EUID" -ne 0 ]; then
@@ -18,159 +20,105 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-echo "Building Forge System ISO..."
-echo ""
-
 # Clean
 rm -rf "$BUILD_DIR"
-mkdir -p "$BUILD_DIR"
+mkdir -p "$WORK_DIR" "$ROOTFS_DIR"
 
-# Create archiso profile
-mkdir -p "$BUILD_DIR"/{airootfs,efiboot/grub,grub}
+echo "[1/8] Bootstrap Arch Linux base..."
+echo ""
 
-# KDE Plasma + Forge packages
-cat > "$BUILD_DIR/packages.x86_64" << 'EOF'
-base
-linux
-linux-firmware
-nano
-vim
-networkmanager
-network-manager-applet
-bluez
-bluez-utils
-pipewire
-pipewire-pulse
-wireplumber
-xdg-utils
-xdg-desktop-portal
-xdg-desktop-portal-kde
-polkit
-dbus
-flatpak
+# Bootstrap base system
+pacstrap -K "$ROOTFS_DIR" base linux linux-firmware \
+    nano vim networkmanager network-manager-applet \
+    bluez bluez-utils pipewire pipewire-pulse wireplumber \
+    xdg-utils xdg-desktop-portal polkit dbus flatpak \
+    libinput libseat libgbm mesa xorg-xwayland libxkbcommon \
+    qt6-base qt6-declarative qt6-wayland \
+    alacritty git base-devel cmake
 
-# KDE Plasma 6
-plasma-desktop
-plasma-workspace
-plasma-panel
-plasma-nm
-plasma-pa
-plasma-systemmonitor
-kde-config-sddm
-sddm
-sddm-kcm
-systemsettings
-dolphin
-konsole
-kate
-ark
-gwenview
-okular
-spectacle
-filelight
-kcalc
-ksystemlog
+echo ""
+echo "[2/8] Installing KDE Plasma 6..."
+echo ""
 
-# Qt 6
-qt6-base
-qt6-declarative
-qt6-wayland
-qt6-tools
+arch-chroot "$ROOTFS_DIR" /bin/bash << 'CHROOT'
+pacman -S --noconfirm --needed \
+    plasma-desktop plasma-workspace plasma-panel \
+    plasma-nm plasma-pa plasma-systemmonitor \
+    systemsettings dolphin konsole kate ark gwenview \
+    okular spectacle filelight kcalc \
+    sddm sddm-kcm kde-config-sddm
+CHROOT
 
-# Display
-libinput
-libseat
-libgbm
-mesa
-xorg-xwayland
-libxkbcommon
-
-# Forge custom tools
-alacritty
-git
-base-devel
-cmake
-EOF
-
-# Build Forge binaries if they don't exist
-echo "Building Forge tools..."
-cd "$FORGE_DIR"
-if [ ! -f target/release/forge-settings ]; then
-    cargo build --release 2>/dev/null || true
-fi
-cd "$SCRIPT_DIR"
-
-# Bundle Forge binaries
-echo "Bundling Forge tools..."
-mkdir -p "$BUILD_DIR/airootfs/usr/local/bin"
-mkdir -p "$BUILD_DIR/airootfs/usr/share/forge"
-mkdir -p "$BUILD_DIR/airootfs/usr/share/forge/qml"
-mkdir -p "$BUILD_DIR/airootfs/etc/systemd/system"
-mkdir -p "$BUILD_DIR/airootfs/etc/pam.d"
-mkdir -p "$BUILD_DIR/airootfs/etc/dbus-1/system.d"
-mkdir -p "$BUILD_DIR/airootfs/usr/share/polkit-1/actions"
-mkdir -p "$BUILD_DIR/airootfs/usr/share/wayland-sessions"
-mkdir -p "$BUILD_DIR/airootfs/usr/share/icons/hicolor/scalable/apps"
-mkdir -p "$BUILD_DIR/airootfs/usr/bin"
-mkdir -p "$BUILD_DIR/airootfs/etc/sddm.conf.d"
-mkdir -p "$BUILD_DIR/airootfs/root"
+echo ""
+echo "[3/8] Installing Forge tools..."
+echo ""
 
 # Copy Forge binaries
+mkdir -p "$ROOTFS_DIR/usr/local/bin"
+mkdir -p "$ROOTFS_DIR/usr/share/forge"
+mkdir -p "$ROOTFS_DIR/usr/share/forge/qml"
+
 for bin in forge-settings forge-notifications forge-privilege forge-session forge-clip forge-screenshot; do
     if [ -f "$FORGE_DIR/target/release/$bin" ]; then
-        cp "$FORGE_DIR/target/release/$bin" "$BUILD_DIR/airootfs/usr/local/bin/"
+        cp "$FORGE_DIR/target/release/$bin" "$ROOTFS_DIR/usr/local/bin/"
     fi
 done
 
 # Copy helper scripts
 for script in forge-power.sh forge-apply.sh forge-install-helper.sh; do
-    if [ -f "$FORGE_DIR/scripts/$script" ]; then
-        name=$(basename "$script" .sh)
-        cp "$FORGE_DIR/scripts/$script" "$BUILD_DIR/airootfs/usr/local/bin/$name"
-    fi
+    [ -f "$FORGE_DIR/scripts/$script" ] && cp "$FORGE_DIR/scripts/$script" "$ROOTFS_DIR/usr/local/bin/$(basename $script .sh)"
 done
-cp "$FORGE_DIR/forge-shell/direct/generate-data.sh" "$BUILD_DIR/airootfs/usr/local/bin/forge-gen-data" 2>/dev/null || true
+cp "$FORGE_DIR/forge-shell/direct/generate-data.sh" "$ROOTFS_DIR/usr/local/bin/forge-gen-data" 2>/dev/null || true
 
-# Generate data.js
-bash "$BUILD_DIR/airootfs/usr/local/bin/forge-gen-data" 2>/dev/null || true
-cp "$HOME/.local/share/forge/data.js" "$BUILD_DIR/airootfs/usr/share/forge/" 2>/dev/null || true
+# Generate data
+bash "$ROOTFS_DIR/usr/local/bin/forge-gen-data" 2>/dev/null || true
+cp "$HOME/.local/share/forge/data.js" "$ROOTFS_DIR/usr/share/forge/" 2>/dev/null || true
 
-# Copy QML files
-cp "$FORGE_DIR/forge-shell/direct/forge-shell-direct.qml" "$BUILD_DIR/airootfs/usr/share/forge/" 2>/dev/null || true
-cp "$FORGE_DIR/forge-shell/qml/"*.qml "$BUILD_DIR/airootfs/usr/share/forge/qml/" 2>/dev/null || true
-cp "$FORGE_DIR/forge-system/forge-dm.qml" "$BUILD_DIR/airootfs/usr/share/forge/" 2>/dev/null || true
-cp "$FORGE_DIR/forge-setup/forge-setup.qml" "$BUILD_DIR/airootfs/usr/share/forge/" 2>/dev/null || true
+# Copy QML
+cp "$FORGE_DIR/forge-shell/direct/forge-shell-direct.qml" "$ROOTFS_DIR/usr/share/forge/" 2>/dev/null || true
+cp "$FORGE_DIR/forge-shell/qml/"*.qml "$ROOTFS_DIR/usr/share/forge/qml/" 2>/dev/null || true
 
-# Copy DM and installer
-cp "$FORGE_DIR/forge-system/forge-dm" "$BUILD_DIR/airootfs/usr/local/bin/" 2>/dev/null || true
-cp "$FORGE_DIR/forge-setup/forge-setup" "$BUILD_DIR/airootfs/usr/local/bin/" 2>/dev/null || true
-cp "$FORGE_DIR/forge-installer/forge-installer" "$BUILD_DIR/airootfs/usr/local/bin/" 2>/dev/null || true
-
-# Copy icon
-cp "$FORGE_DIR/packaging/forge-logo.svg" "$BUILD_DIR/airootfs/usr/share/icons/hicolor/scalable/apps/forge-logo.svg" 2>/dev/null || true
+# Copy DM
+cp "$FORGE_DIR/forge-system/forge-dm" "$ROOTFS_DIR/usr/local/bin/" 2>/dev/null || true
+cp "$FORGE_DIR/forge-setup/forge-setup" "$ROOTFS_DIR/usr/local/bin/" 2>/dev/null || true
 
 # Fix permissions
-echo "Setting permissions..."
-chmod 755 "$BUILD_DIR/airootfs/usr/local/bin/"* 2>/dev/null || true
-chmod 755 "$BUILD_DIR/airootfs/usr/share/forge/"*.sh 2>/dev/null || true
+chmod 755 "$ROOTFS_DIR/usr/local/bin/"* 2>/dev/null || true
 
-# Install Plasma theme
-echo "Installing Forge Plasma theme..."
-THEME_DIR="$BUILD_DIR/airootfs/usr/share/plasma/look-and-feel/Forge.desktop"
+echo ""
+echo "[4/8] Installing Forge Plasma theme..."
+echo ""
+
+# Plasma theme
+THEME_DIR="$ROOTFS_DIR/usr/share/plasma/look-and-feel/Forge.desktop"
 mkdir -p "$THEME_DIR/contents/layouts"
-cp "$FORGE_DIR/forge-theme/plasma/look-and-feel/metadata.desktop" "$THEME_DIR/"
-cp "$FORGE_DIR/forge-theme/plasma/look-and-feel/contents/layouts/defaults" "$THEME_DIR/contents/layouts/" 2>/dev/null || true
+cat > "$THEME_DIR/metadata.desktop" << 'EOF'
+[Desktop Entry]
+Comment=Forge Desktop Environment
+Name=Forge
+X-KDE-PluginInfo-Author=Forge Team
+X-KDE-PluginInfo-Category=Plasma Look And Feel
+X-KDE-PluginInfo-Name=Forge
+X-KDE-PluginInfo-Version=0.1.0
+X-Plasma-API-Migrate-Version=6
+X-Plasma-MainScript=contents/layouts/defaults
+EOF
 
-# Install color scheme
-mkdir -p "$BUILD_DIR/airootfs/usr/share/color-schemes"
-cp "$FORGE_DIR/forge-theme/colors/Forge.colors" "$BUILD_DIR/airootfs/usr/share/color-schemes/" 2>/dev/null || true
+# Color scheme
+mkdir -p "$ROOTFS_DIR/usr/share/color-schemes"
+cp "$FORGE_DIR/forge-theme/colors/Forge.colors" "$ROOTFS_DIR/usr/share/color-solutions/" 2>/dev/null || true
 
-# Install KWin config
-mkdir -p "$BUILD_DIR/airootfs/etc/xdg"
-cp "$FORGE_DIR/forge-theme/kwin/kwinrc" "$BUILD_DIR/airootfs/etc/xdg/" 2>/dev/null || true
+# KWin config
+mkdir -p "$ROOTFS_DIR/etc/xdg"
+cp "$FORGE_DIR/forge-theme/kwin/kwinrc" "$ROOTFS_DIR/etc/xdg/" 2>/dev/null || true
 
-# SDDM configuration
-cat > "$BUILD_DIR/airootfs/etc/sddm.conf.d/forge.conf" << 'EOF'
+echo ""
+echo "[5/8] Configuring SDDM..."
+echo ""
+
+# SDDM config
+mkdir -p "$ROOTFS_DIR/etc/sddm.conf.d"
+cat > "$ROOTFS_DIR/etc/sddm.conf.d/forge.conf" << 'EOF'
 [Theme]
 Current=Forge
 
@@ -179,85 +127,98 @@ HaltCommand=/usr/bin/systemctl poweroff
 RebootCommand=/usr/bin/systemctl reboot
 EOF
 
-# Desktop session entry
-cat > "$BUILD_DIR/airootfs/usr/share/wayland-sessions/forge.desktop" << 'EOF'
+# Desktop session
+cat > "$ROOTFS_DIR/usr/share/wayland-sessions/forge.desktop" << 'EOF'
 [Desktop Entry]
 Name=Forge
-Comment=Forge Desktop Environment (Plasma)
+Comment=Forge Desktop Environment
 Exec=/usr/bin/startplasma-wayland
 Type=Application
 DesktopNames=KDE
 EOF
 
-# Systemd services
-cat > "$BUILD_DIR/airootfs/etc/systemd/system/forge-notifications.service" << 'EOF'
-[Unit]
-Description=Forge Notification Daemon
-After=graphical-session.target
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/forge-notifications
-Restart=always
-
-[Install]
-WantedBy=graphical-session.target
-EOF
-
 # Enable SDDM
-mkdir -p "$BUILD_DIR/airootfs/etc/systemd/system/display-manager.target.wants"
-ln -sf /usr/lib/systemd/system/sddm.service "$BUILD_DIR/airootfs/etc/systemd/system/display-manager.target.wants/sddm.service" 2>/dev/null || true
+arch-chroot "$ROOTFS_DIR" systemctl enable sddm
 
-# PAM config
-cat > "$BUILD_DIR/airootfs/etc/pam.d/forge-greeter" << 'EOF'
-#%PAM-1.0
-auth       required     pam_unix.so
-account    required     pam_unix.so
-session    required     pam_unix.so
+echo ""
+echo "[6/8] Configuring system..."
+echo ""
+
+# Timezone
+arch-chroot "$ROOTFS_DIR" ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+arch-chroot "$ROOTFS_DIR" hwclock --systohc
+
+# Locale
+echo "en_US.UTF-8 UTF-8" > "$ROOTFS_DIR/etc/locale.gen"
+arch-chroot "$ROOTFS_DIR" locale-gen
+
+# Hostname
+echo "forge" > "$ROOTFS_DIR/etc/hostname"
+
+# Network
+echo "forge" > "$ROOTFS_DIR/etc/hostname"
+cat > "$ROOTFS_DIR/etc/hosts" << 'EOF'
+127.0.0.1   localhost
+::1         localhost
+127.0.1.1   forge
 EOF
 
-# OOBE script
-cat > "$BUILD_DIR/airootfs/usr/share/forge/forge-oobe.sh" << 'OOBESCRIPT'
-#!/bin/bash
-if [ ! -f /var/lib/forge/.oobe-done ]; then
-    mkdir -p /var/lib/forge
-    touch /var/lib/forge/.oobe-done
-    /usr/local/bin/forge-setup
-fi
-OOBESCRIPT
-chmod +x "$BUILD_DIR/airootfs/usr/share/forge/forge-oobe.sh"
+# Enable services
+arch-chroot "$ROOTFS_DIR" systemctl enable NetworkManager
+arch-chroot "$ROOTFS_DIR" systemctl enable bluetooth
+arch-chroot "$ROOTFS_DIR" systemctl enable sddm
 
-# Root shell profile
-cat > "$BUILD_DIR/airootfs/root/.bash_profile" << 'EOF'
-# Forge Auto-login (remove for production)
-if [ -z "$WAYLAND_DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
-    exec startplasma-wayland
-fi
-EOF
+echo ""
+echo "[7/8] Creating initramfs..."
+echo ""
 
-# Limine config
-cat > "$BUILD_DIR/airootfs/boot/limine.conf" << 'EOF'
+arch-chroot "$ROOTFS_DIR" mkinitcpio -P
+
+echo ""
+echo "[8/8] Creating ISO..."
+echo ""
+
+# Create EFI boot files
+mkdir -p "$WORK_DIR/iso/EFI/BOOT"
+cp "$ROOTFS_DIR/boot/vmlinuz-linux" "$WORK_DIR/iso/boot/"
+cp "$ROOTFS_DIR/boot/initramfs-linux.img" "$WORK_DIR/iso/boot/"
+
+# Create Limine config
+mkdir -p "$WORK_DIR/iso/boot/limine"
+cat > "$WORK_DIR/iso/boot/limine/limine.conf" << 'EOF'
 TIMEOUT=0
 
 :Forge
     PROTOCOL=linux
-    KERNEL_PATH=boot:///vmlinuz-linux
-    CMDLINE=root=UUID=ROOTUUID rw quiet loglevel=0
-    INITRD_PATH=boot:///initramfs-linux.img
+    KERNEL_PATH=boot:///boot/vmlinuz-linux
+    CMDLINE=root=/dev/sda2 rw quiet loglevel=0
+    INITRD_PATH=boot:///boot/initramfs-linux.img
 EOF
 
-echo ""
-echo "Setting up archiso..."
-echo ""
+# Copy Limine BIOS/UEFI files
+cp /usr/share/limine/limine-bios.sys "$WORK_DIR/iso/boot/limine/" 2>/dev/null || true
+cp /usr/share/limine/limine-bios-cd.bin "$WORK_DIR/iso/boot/limine/" 2>/dev/null || true
+cp /usr/share/limine/limine-uefi-cd.bin "$WORK_DIR/iso/boot/limine/" 2>/dev/null || true
 
-# Use archiso
-cp -r /usr/share/archiso/configs/releng/* "$BUILD_DIR/" 2>/dev/null || true
+# Create squashfs
+echo "Creating squashfs..."
+mksquashfs "$ROOTFS_DIR" "$WORK_DIR/iso/airootfs.sfs" -comp xz -b 1M
 
-# Build ISO
-echo "Building ISO..."
-mkarchiso -v -w "$BUILD_DIR/work" -o "$BUILD_DIR/out" "$BUILD_DIR"
+# Create ISO with xorriso
+echo "Creating ISO..."
+xorriso -as mkisofs \
+    -o "$BUILD_DIR/out/$ISO_NAME" \
+    -b boot/limine/limine-bios-cd.bin \
+    -no-emul-boot \
+    -boot-load-size 4 \
+    -boot-info-table \
+    --efi-boot boot/limine/limine-uefi-cd.bin \
+    -efi-boot-part-size 256 \
+    -isohybrid-gpt-basdat \
+    "$WORK_DIR/iso"
 
 echo ""
 echo "========================="
 echo "Build complete!"
 echo "ISO: $BUILD_DIR/out/$ISO_NAME"
+echo "Size: $(du -h "$BUILD_DIR/out/$ISO_NAME" | cut -f1)"

@@ -35,9 +35,9 @@ mkdir -p "$BUILD_DIR/pkg-cache"
 # Create custom pacman.conf for chroot
 mkdir -p "$BUILD_DIR/pkg-cache"
 
-cat > "$BUILD_DIR/pacman.conf" << 'EOF'
+cat > "$BUILD_DIR/pacman.conf" << 'PCONF'
 [options]
-CacheDir = /root/forge-build/pkg-cache/
+CacheDir = /home/admin/forge-build/pkg-cache/
 Architecture = auto
 SigLevel = Optional TrustAll
 
@@ -46,7 +46,7 @@ Server = https://archlinux.org/repos/$repo/os/$arch
 
 [extra]
 Server = https://archlinux.org/repos/$repo/os/$arch
-EOF
+PCONF
 
 # Bootstrap base system
 pacstrap -K -C "$BUILD_DIR/pacman.conf" "$ROOTFS_DIR" base linux linux-firmware \

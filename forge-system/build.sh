@@ -33,12 +33,11 @@ mkdir -p "$TMPDIR"
 mkdir -p "$BUILD_DIR/pkg-cache"
 
 # Create custom pacman.conf for chroot
+mkdir -p "$BUILD_DIR/pkg-cache"
+
 cat > "$BUILD_DIR/pacman.conf" << 'EOF'
 [options]
-RootDir = $BUILD_DIR/work/rootfs
-CacheDir = $BUILD_DIR/pkg-cache/
-GPGDir = $BUILD_DIR/work/rootfs/etc/pacman.d/gnupg
-HookDir = $BUILD_DIR/work/rootfs/etc/pacman.d/hooks/
+CacheDir = /root/forge-build/pkg-cache/
 Architecture = auto
 SigLevel = Optional TrustAll
 

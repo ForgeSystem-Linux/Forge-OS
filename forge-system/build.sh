@@ -27,29 +27,11 @@ mkdir -p "$WORK_DIR" "$ROOTFS_DIR"
 echo "[1/8] Bootstrap Arch Linux base..."
 echo ""
 
-# Use disk-backed cache instead of tmpfs
-export TMPDIR="$BUILD_DIR/tmp"
-mkdir -p "$TMPDIR"
-mkdir -p "$BUILD_DIR/pkg-cache"
-
-# Create custom pacman.conf for chroot
-mkdir -p "$BUILD_DIR/pkg-cache"
-
-cat > "$BUILD_DIR/pacman.conf" << 'PCONF'
-[options]
-CacheDir = /home/admin/forge-build/pkg-cache/
-Architecture = auto
-SigLevel = Optional TrustAll
-
-[core]
-Server = https://archlinux.org/repos/$repo/os/$arch
-
-[extra]
-Server = https://archlinux.org/repos/$repo/os/$arch
-PCONF
+# Clean pacman cache to free space before build
+pacman -Scc --noconfirm 2>/dev/null || true
 
 # Bootstrap base system
-pacstrap -K -C "$BUILD_DIR/pacman.conf" "$ROOTFS_DIR" base linux linux-firmware \
+pacstrap -K "$ROOTFS_DIR" base linux linux-firmware \
     nano vim networkmanager network-manager-applet \
     bluez bluez-utils pipewire pipewire-pulse wireplumber \
     xdg-utils xdg-desktop-portal polkit dbus flatpak \
